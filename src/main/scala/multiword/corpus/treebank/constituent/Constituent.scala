@@ -13,21 +13,8 @@
  * limitations under the License.
  */
 
-package multiword.corpus.treebank
+package multiword.corpus.treebank.constituent
 
-import scala.collection.mutable
-import multiword.corpus.core._
+import multiword.corpus.treebank._
 
-class TreebankException extends CorpusException
-
-/** A sentence with treebank mark-up 
- * @tparam T the underlying unit used for tokens
- */
-class TreebankSentence[T] (
-    val tokens:Seq[Token[T]], val anno:Annotation[Sentence[T]])
-
-/** A collection of annotated sentences
- * @tparam T the underlying unit used for tokens
- */
-abstract class Treebank[T] extends Iterable[TreebankSentence[T]]
-
+class ConstituentException extends TreebankException
