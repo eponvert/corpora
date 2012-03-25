@@ -33,7 +33,7 @@ import scala.collection.mutable
  *   `dfsIndex` 
  * @tparam L the type of the label
  */
-class Bracket[L](val label:L, val span:Span, val dfsIndex:Int)
+case class Bracket[L](val label:L, val span:Span, val dfsIndex:Int)
 extends LinguisticEntity {
   /** The string to print before a bracket when converting to String */
   lazy val bracketPrefix = "(" + label
@@ -42,27 +42,18 @@ extends LinguisticEntity {
   val bracketPostfix = ")"
 }
 
-object Bracket {
-  def apply[L](label:L, span:Span, dfsIndex:Int) = 
-    new Bracket(label, span, dfsIndex)
-
-  def apply[L](label:L, start:Int, end:Int, dfsIndex:Int)
-  :Bracket[L] = 
-    apply(label, Span(start, end), dfsIndex)
-}
-
 /** A set of bracket annotations for a sentence
  * @param length the number of tokens in the sentence
  * @param braks the set of brackets in the sentence annotations
  * @tparam N the type of the bracket labels
  * @tparam T the type of the underlying class of terms
  */
-class BracketSet[N,T](val sentence:Sentence[T], val bracks:Iterable[Bracket[N]])
+case class BracketSet[N,T](
+    val sentence:Sentence[T], 
+    val brackets:Set[Bracket[N]])
 extends Annotation[Sentence[T]] {
 
   import BracketSet._
-
-  lazy val brackets = bracks.toSet
 
   // firstInd = map from each token index to the brackets starting at that index
   // lastInd = map from each token index to the brackets ending at that index
@@ -70,38 +61,24 @@ extends Annotation[Sentence[T]] {
     val _firstInd = mutableIndexSeq[N](sentence.length)
     val _lastInd = mutableIndexSeq[N](sentence.length)
     brackets.filter(_.span.length > 0).foreach(bracket => {
-      _firstInd(bracket.span.start) :+ bracket
-      _lastInd(bracket.span.end) :+ bracket})
+      _firstInd(bracket.span.start) += bracket
+      _lastInd(bracket.span.end) += bracket})
     (immutableSeq(_firstInd), immutableSeq(_lastInd))
   }
 
   def toTree:SyntaxTree[N,T] = {
     null
   }
-
-  override def equals(that:Any) = that match {
-    case other:BracketSet[_,_] => hashCode == other.hashCode
-    case _ => false
-  }
-
-  override lazy val hashCode = (BracketSet, sentence, brackets).hashCode + 43
 }
 
 object BracketSet {
 
-  def apply[N,T](
-      sentence:Sentence[T], brackets:Iterable[Bracket[N]]) = 
-        new BracketSet(sentence, brackets)
-
-  def unapply[N,T](bracketSet:BracketSet[N,T]) = 
-    Some((bracketSet.sentence, bracketSet.brackets))
-
   private def mutableIndexSeq[L](n:Int) =
-    (for (_ <- 0 to n) yield mutable.Seq[Bracket[L]]()).toSeq
+    (for (_ <- 0 to n) yield mutable.Buffer[Bracket[L]]()).toIndexedSeq
 
   /** Creates an array of immutable sequences of brackets sorted by dfsIndex
    * from an array of mutable 
    */
   private def immutableSeq[L](s:Seq[mutable.Seq[Bracket[L]]]) = 
-    s.map(_.sortBy(_.dfsIndex).toSeq)
+    s.map(_.sortBy(_.dfsIndex).toIndexedSeq)
 }

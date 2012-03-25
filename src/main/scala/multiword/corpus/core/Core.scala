@@ -36,14 +36,14 @@ abstract class Token[T] extends LinguisticEntity {
  * @param term this token's term
  * @tparam T the type of the underlying format used for terms
  */
-class SimpleToken[T](val term:T) extends Token[T]
+case class SimpleToken[T](val term:T) extends Token[T]
 
 object Token {
 
   /** Wrap a string in a token object
    * @tparam T the type of the underlying format used for terms
    */
-  def apply[T](term:T) = new SimpleToken(term)
+  def apply[T](term:T) = SimpleToken(term)
 }
 
 /** Abstract class for a sentence; a sequence of terms
@@ -62,28 +62,26 @@ abstract class Sentence[T] extends LinguisticEntity {
  * @param tokens the sequence of tokens for this sentence
  * @tparam T the type of the underlying format used for terms
  */
-class SimpleSentence[T](val tokens:Seq[Token[T]]) extends Sentence[T] {
+case class SimpleSentence[T](val tokens:IndexedSeq[Token[T]]) extends Sentence[T] {
   override def length = tokens.length
+
+  override def hashCode = (SimpleSentence, tokens).hashCode + 43
+
+  override def equals(that: Any) = that match {
+    case other:Sentence[_] => other.tokens == tokens
+    case _ => false
+  }
 }
 
 object Sentence {
-
-  /** Create a simple sentence from a sequence of tokens
-   * @param tokens the sequence of tokens for this sentence
-   * @tparam T the type of the underlying format used for terms
-   */
-  def apply[T](tokens:Iterable[Token[T]]) = new SimpleSentence(tokens.toSeq)
+  def apply[T](tokens:Iterable[Token[T]]) = SimpleSentence(tokens.toIndexedSeq)
 }
 
 /** A span of entities, such as tokens */
-class Span(val start:Int, val end:Int) extends LinguisticEntity {
+case class Span(val start:Int, val end:Int) extends LinguisticEntity {
 
   /** Return the length of this span */
   lazy val length = end - start
-}
-
-object Span {
-  def apply(start:Int, end:Int) = new Span(start, end) 
 }
 
 /** Abstract superclass for documents */
@@ -96,20 +94,10 @@ abstract class Document extends LinguisticEntity
 trait Annotation[L <: LinguisticEntity]
 
 /** Simple label-annotations for linguistic entities; can apply to
+ * @param entity the liguistic entity being annotated
+ * @param label the label annotating the entity
  * @tparam L the type of linguistic entity the annotation is relevant to
  * @tparam A the type used for labels
  */
-class Labeled[L <: LinguisticEntity, A](val entity:L, val label:A)
+case class Labeled[L <: LinguisticEntity, A](val entity:L, val label:A)
 extends Annotation[L]
-
-object Labeled {
-  /** Create a simple annotation for the linguistic entity with the label
-   * provided
-   * @param entity the liguistic entity being annotated
-   * @param label the label annotating the entity
-   * @tparam L the type of linguistic entity the annotation is relevant to
-   * @tparam A the type used for labels
-   */
-  def apply[L <: LinguisticEntity, A](entity:L, label:A) =
-    new Labeled(entity, label)
-}

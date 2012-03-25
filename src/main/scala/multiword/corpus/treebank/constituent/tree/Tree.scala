@@ -33,35 +33,38 @@ class SyntaxTree[N, T](val root:TreeNode[N, T]) extends Annotation[Sentence[T]] 
     val startIndices = mutable.Stack[Int]()
     val labels = mutable.Stack[N]()
     val dfsIndices = mutable.Stack[Int]()
-    val nodes = mutable.Stack(Some(root), None)
-    val sentence = mutable.Seq[T]()
-    var nonTerminals = mutable.Seq[NonTerminal[N, T]]()
-    val brackets = mutable.Seq[Bracket[N]]()
+    val nodes = mutable.Stack[Option[TreeNode[N, T]]](Some(root))
+    val sentenceBuffer = mutable.Buffer[T]()
+    val brackets = mutable.Buffer[Bracket[N]]()
     while (!nodes.isEmpty) {
       nodes.pop match {
         case Some(node) => {
           node match {
             case Terminal(symbol) => {
-              sentence :+ symbol
+              sentenceBuffer += symbol
               tokenIndex += 1
             }
             case NonTerminal(label, daughters) => {
               labels push label
               dfsIndices push dfsIndex
+              startIndices push tokenIndex
               dfsIndex += 1
-              daughters.toSeq.reverse.foreach(d => { 
-                nodes push Some(d)
-                nodes push None })
+              nodes push None
+              daughters.toSeq.reverse.foreach(d => {
+                nodes push Some(d) })
             }
           }
         }
         case None => {
-          brackets :+ 
-            Bracket(labels.pop, startIndices.pop, tokenIndex, dfsIndices.pop)
+          val label = labels.pop
+          val start = startIndices.pop
+          val end = tokenIndex
+          val dfsIndex = dfsIndices.pop
+          brackets += Bracket(label, Span(start, end), dfsIndex)
         }
       }
     }
-    BracketSet(Sentence(sentence map { Token(_) }), brackets)
+    BracketSet(Sentence(sentenceBuffer map { Token(_) }), brackets.toSet)
   }
 }
 
