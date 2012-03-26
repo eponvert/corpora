@@ -15,7 +15,8 @@
 
 package multiword.corpus.treebank.constituent
 
-/** Classes and utilities for representing constituent syntax trees as bracket
- * sets 
+/**
+ * Classes and utilities for representing constituent syntax trees as bracket
+ * sets
  */
 package object bracket

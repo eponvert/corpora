@@ -22,63 +22,68 @@ class CorpusException extends Exception
 /** Abstract class of linguistic objects */
 abstract class LinguisticEntity extends Serializable
 
-/** Abstract superclass for a term in context
+/**
+ * Abstract superclass for a term in context
  * @tparam T the type of the underlying format used for terms
  */
 abstract class Token[T] extends LinguisticEntity {
 
   /** Return the term string associated with this token */
-  def term:T
+  def term: T
 }
 
-/** Simple implementation of a token, wrapping a term with no further
+/**
+ * Simple implementation of a token, wrapping a term with no further
  * information
  * @param term this token's term
  * @tparam T the type of the underlying format used for terms
  */
-case class SimpleToken[T](val term:T) extends Token[T]
+case class SimpleToken[T](val term: T) extends Token[T]
 
 object Token {
 
-  /** Wrap a string in a token object
+  /**
+   * Wrap a string in a token object
    * @tparam T the type of the underlying format used for terms
    */
-  def apply[T](term:T) = SimpleToken(term)
+  def apply[T](term: T) = SimpleToken(term)
 }
 
-/** Abstract class for a sentence; a sequence of terms
+/**
+ * Abstract class for a sentence; a sequence of terms
  * @tparam T the type of the underlying format used for terms
  */
 abstract class Sentence[T] extends LinguisticEntity {
 
   /** Return an iterable over the tokens of the sentence */
-  def tokens:Iterable[Token[T]]
+  def tokens: Iterable[Token[T]]
 
   /** Return the number of tokens in the sentence */
-  def length:Int
+  def length: Int
 }
 
-/** Simple implemenation of a sentence consisting of a sequence of tokens
+/**
+ * Simple implemenation of a sentence consisting of a sequence of tokens
  * @param tokens the sequence of tokens for this sentence
  * @tparam T the type of the underlying format used for terms
  */
-case class SimpleSentence[T](val tokens:IndexedSeq[Token[T]]) extends Sentence[T] {
+case class SimpleSentence[T](val tokens: IndexedSeq[Token[T]]) extends Sentence[T] {
   override def length = tokens.length
 
   override def hashCode = (SimpleSentence, tokens).hashCode + 43
 
   override def equals(that: Any) = that match {
-    case other:Sentence[_] => other.tokens == tokens
+    case other: Sentence[_] => other.tokens == tokens
     case _ => false
   }
 }
 
 object Sentence {
-  def apply[T](tokens:Iterable[Token[T]]) = SimpleSentence(tokens.toIndexedSeq)
+  def apply[T](tokens: Iterable[Token[T]]) = SimpleSentence(tokens.toIndexedSeq)
 }
 
 /** A span of entities, such as tokens */
-case class Span(val start:Int, val end:Int) extends LinguisticEntity {
+case class Span(val start: Int, val end: Int) extends LinguisticEntity {
 
   /** Return the length of this span */
   lazy val length = end - start
@@ -87,17 +92,19 @@ case class Span(val start:Int, val end:Int) extends LinguisticEntity {
 /** Abstract superclass for documents */
 abstract class Document extends LinguisticEntity
 
-/** Linguistic annotation: either provided by human subject-matter experts, or
+/**
+ * Linguistic annotation: either provided by human subject-matter experts, or
  * provided by machine annotators
  * @tparam L the type of linguistic entity the annotation is relevant to
  */
 trait Annotation[L <: LinguisticEntity]
 
-/** Simple label-annotations for linguistic entities; can apply to
+/**
+ * Simple label-annotations for linguistic entities; can apply to
  * @param entity the liguistic entity being annotated
  * @param label the label annotating the entity
  * @tparam L the type of linguistic entity the annotation is relevant to
  * @tparam A the type used for labels
  */
-case class Labeled[L <: LinguisticEntity, A](val entity:L, val label:A)
-extends Annotation[L]
+case class Labeled[L <: LinguisticEntity, A](val entity: L, val label: A)
+  extends Annotation[L]

@@ -24,10 +24,10 @@ class SyntaxTreeException extends ConstituentException
 
 class NotWellFormedSyntaxTree extends SyntaxTreeException
 
-class SyntaxTree[N, T](val root:TreeNode[N, T]) extends Annotation[Sentence[T]] {
+class SyntaxTree[N, T](val root: TreeNode[N, T]) extends Annotation[Sentence[T]] {
 
   /** Convert this tree structure to a {@link BracketSet} structure */
-  def toBracketSet:BracketSet[N,T] = {
+  lazy val bracketSet: BracketSet[N, T] = {
     var tokenIndex = 0
     var dfsIndex = 0
     val startIndices = mutable.Stack[Int]()
@@ -51,7 +51,8 @@ class SyntaxTree[N, T](val root:TreeNode[N, T]) extends Annotation[Sentence[T]] 
               dfsIndex += 1
               nodes push None
               daughters.toSeq.reverse.foreach(d => {
-                nodes push Some(d) })
+                nodes push Some(d)
+              })
             }
           }
         }
@@ -69,20 +70,23 @@ class SyntaxTree[N, T](val root:TreeNode[N, T]) extends Annotation[Sentence[T]] 
 }
 
 object SyntaxTree {
-  def apply[N,T](root:TreeNode[N,T]) = new SyntaxTree(root) 
+  def apply[N, T](root: TreeNode[N, T]) = new SyntaxTree(root)
 }
 
-/** General class of the tree data structure
+/**
+ * General class of the tree data structure
  * @tparam N the node or non-terminal label type
  * @tparam T the leaf or terminal symbol type
  */
-abstract class TreeNode[N,T]
+abstract class TreeNode[N, T]
 
-/** A non-terminal node in an abstract syntax tree
- * @param label the  */
-case class NonTerminal[N,T](
-    val label:N,
-    val daughters:Iterable[TreeNode[N,T]]) extends TreeNode[N,T]
+/**
+ * A non-terminal node in an abstract syntax tree
+ * @param label the
+ */
+case class NonTerminal[N, T](
+  val label: N,
+  val daughters: Iterable[TreeNode[N, T]]) extends TreeNode[N, T]
 
 /*
 object NonTerminal {
@@ -91,7 +95,7 @@ object NonTerminal {
 }
 */
 
-case class Terminal[N,T](val symbol:T) extends TreeNode[N,T]
+case class Terminal[N, T](val symbol: T) extends TreeNode[N, T]
 
 /*
 object Terminal {
@@ -100,8 +104,8 @@ object Terminal {
 */
 
 object TreeNode {
-  def apply[N](symbol:N, daughters:TreeNode[N,N]*) =
-    if (daughters.isEmpty) new Terminal[N,N](symbol) 
-    else new NonTerminal(symbol, daughters) 
-    
+  def apply[N](symbol: N, daughters: TreeNode[N, N]*) =
+    if (daughters.isEmpty) new Terminal[N, N](symbol)
+    else new NonTerminal(symbol, daughters)
+
 }

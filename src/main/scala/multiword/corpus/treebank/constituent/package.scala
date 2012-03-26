@@ -15,7 +15,9 @@
 
 package multiword.corpus.treebank
 
-/** Classes and utilities for constituency trees and treebanks; constituent
+/**
+ * Classes and utilities for constituency trees and treebanks; constituent
  * trees represent linguistic structure as a set of non-overlapping brackets
- * (labeled spans) over the tokens of a sentence */
+ * (labeled spans) over the tokens of a sentence
+ */
 package object constituent

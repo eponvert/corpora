@@ -15,7 +15,8 @@
 
 package multiword
 
-/** Classes and utilities for working with a wide varient (we hope, someday)
+/**
+ * Classes and utilities for working with a wide varient (we hope, someday)
  * of linguistic data-sets
  */
 package object corpus

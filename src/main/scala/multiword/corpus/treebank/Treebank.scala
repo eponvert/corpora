@@ -20,14 +20,15 @@ import multiword.corpus.core._
 
 class TreebankException extends CorpusException
 
-/** A sentence with treebank mark-up 
+/**
+ * A sentence with treebank mark-up
  * @tparam T the underlying unit used for tokens
  */
-class TreebankSentence[T] (
-    val tokens:Seq[Token[T]], val anno:Annotation[Sentence[T]])
+case class TreebankSentence[T](
+  val tokens: IndexedSeq[Token[T]], val anno: Annotation[Sentence[T]])
 
-/** A collection of annotated sentences
+/**
+ * A collection of annotated sentences
  * @tparam T the underlying unit used for tokens
  */
 abstract class Treebank[T] extends Iterable[TreebankSentence[T]]
-
