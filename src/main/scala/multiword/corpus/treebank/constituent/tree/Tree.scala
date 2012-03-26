@@ -24,7 +24,8 @@ class SyntaxTreeException extends ConstituentException
 
 class NotWellFormedSyntaxTree extends SyntaxTreeException
 
-class SyntaxTree[N, T](val root: TreeNode[N, T]) extends Annotation[Sentence[T]] {
+case class SyntaxTree[N, T](val root: TreeNode[N, T])
+  extends Annotation[Sentence[T]] {
 
   /** Convert this tree structure to a {@link BracketSet} structure */
   lazy val bracketSet: BracketSet[N, T] = {
@@ -65,12 +66,9 @@ class SyntaxTree[N, T](val root: TreeNode[N, T]) extends Annotation[Sentence[T]]
         }
       }
     }
-    BracketSet(Sentence(sentenceBuffer map { Token(_) }), brackets.toSet)
+    BracketSet(Sentence(sentenceBuffer map { Token(_) } toIndexedSeq),
+      brackets.toSet)
   }
-}
-
-object SyntaxTree {
-  def apply[N, T](root: TreeNode[N, T]) = new SyntaxTree(root)
 }
 
 /**
@@ -78,7 +76,11 @@ object SyntaxTree {
  * @tparam N the node or non-terminal label type
  * @tparam T the leaf or terminal symbol type
  */
-abstract class TreeNode[N, T]
+abstract class TreeNode[N, T] {
+
+  /** Make an immutable copy of self */
+  def immutable: TreeNode[N, T]
+}
 
 /**
  * A non-terminal node in an abstract syntax tree
@@ -86,26 +88,18 @@ abstract class TreeNode[N, T]
  */
 case class NonTerminal[N, T](
   val label: N,
-  val daughters: Iterable[TreeNode[N, T]]) extends TreeNode[N, T]
+  val daughters: Iterable[TreeNode[N, T]]) extends TreeNode[N, T] {
 
-/*
-object NonTerminal {
-  def apply[N,T](label:N, daughters:TreeNode[N,T]*) = 
-    new NonTerminal(label, daughters)
+  override def immutable =
+    NonTerminal(label, (daughters.map(_.immutable)).toIndexedSeq)
 }
-*/
 
-case class Terminal[N, T](val symbol: T) extends TreeNode[N, T]
-
-/*
-object Terminal {
-  def apply[N,T](symbol:T) = new Terminal[N,T](symbol)
+case class Terminal[N, T](val symbol: T) extends TreeNode[N, T] {
+  override def immutable = this
 }
-*/
 
 object TreeNode {
   def apply[N](symbol: N, daughters: TreeNode[N, N]*) =
     if (daughters.isEmpty) new Terminal[N, N](symbol)
     else new NonTerminal(symbol, daughters)
-
 }

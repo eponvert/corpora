@@ -59,7 +59,7 @@ case class BracketSet[N, T](
 
   // firstInd = map from each token index to the brackets starting at that index
   // lastInd = map from each token index to the brackets ending at that index
-  private val (firstInd, lastInd) = {
+  private lazy val (firstInd, lastInd) = {
     val _firstInd = mutableIndexSeq[N](sentence.length)
     val _lastInd = mutableIndexSeq[N](sentence.length)
     brackets.filter(_.span.length > 0).foreach(bracket => {
@@ -70,7 +70,38 @@ case class BracketSet[N, T](
   }
 
   lazy val tree: SyntaxTree[N, T] = {
-    null
+    val treeNodes = mutable.Stack[TreeNode[N, T]]()
+    var node: TreeNode[N, T] = null
+    for (index <- 0 until sentence.length) {
+      lastInd(index).foreach(_ => treeNodes.pop)
+      firstInd(index).foreach(bracket => {
+        val daughters = mutable.Buffer[TreeNode[N, T]]()
+        node = NonTerminal(bracket.label, daughters)
+        if (!treeNodes.isEmpty) {
+          treeNodes.top match {
+            case NonTerminal(_, daughters) => {
+              daughters match {
+                case m: mutable.Buffer[TreeNode[N, T]] => m += node
+              }
+            }
+          }
+        }
+        treeNodes.push(node)
+      })
+      node = Terminal(sentence(index))
+      if (!treeNodes.isEmpty) {
+        treeNodes.top match {
+          case NonTerminal(_, daughters) => {
+            daughters match {
+              case m: mutable.Buffer[TreeNode[N, T]] => m += node
+            }
+          }
+        }
+      }
+    }
+    while (!treeNodes.isEmpty)
+      node = treeNodes.pop
+    SyntaxTree(node.immutable)
   }
 }
 

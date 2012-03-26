@@ -51,35 +51,24 @@ object Token {
 
 /**
  * Abstract class for a sentence; a sequence of terms
+ * @param tokens the sequence of tokens in this sentence
  * @tparam T the type of the underlying format used for terms
  */
-abstract class Sentence[T] extends LinguisticEntity {
-
-  /** Return an iterable over the tokens of the sentence */
-  def tokens: Iterable[Token[T]]
+case class Sentence[T](val tokens: IndexedSeq[Token[T]])
+  extends LinguisticEntity {
 
   /** Return the number of tokens in the sentence */
-  def length: Int
-}
+  lazy val length = tokens.length
 
-/**
- * Simple implemenation of a sentence consisting of a sequence of tokens
- * @param tokens the sequence of tokens for this sentence
- * @tparam T the type of the underlying format used for terms
- */
-case class SimpleSentence[T](val tokens: IndexedSeq[Token[T]]) extends Sentence[T] {
-  override def length = tokens.length
-
-  override def hashCode = (SimpleSentence, tokens).hashCode + 43
-
-  override def equals(that: Any) = that match {
-    case other: Sentence[_] => other.tokens == tokens
-    case _ => false
-  }
+  /**
+   * Return the ith term in the sentence
+   * @param i the index of the token to return
+   */
+  def apply(i: Int) = tokens(i).term
 }
 
 object Sentence {
-  def apply[T](tokens: Iterable[Token[T]]) = SimpleSentence(tokens.toIndexedSeq)
+  def apply[T](tokens:T*) = new Sentence(tokens map {Token(_)} toIndexedSeq)
 }
 
 /** A span of entities, such as tokens */

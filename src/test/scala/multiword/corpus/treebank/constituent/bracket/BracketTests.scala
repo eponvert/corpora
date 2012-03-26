@@ -13,60 +13,51 @@
  * limitations under the License.
  */
 
-package multiword.corpus.treebank.constituent.tree
+package multiword.corpus.treebank.constituent.bracket
 
 import org.scalatest.FunSuite
 import multiword.corpus.core._
-import TreeNode._
-import multiword.corpus.treebank.constituent.bracket.{Bracket, BracketSet}
+import multiword.corpus.treebank.constituent.tree._
 
-class SyntaxTreeSuite extends FunSuite {
+class BracketSetTestSuite extends FunSuite {
 
-  test("1 termnial 0 non-terminal syntax tree to bracket set") {
-    val output = SyntaxTree(TreeNode("word")).bracketSet
-    val expectedSentence = Sentence("word")
-    val expectedBrackets = Set.empty[Bracket[String]]
-    val expectedBracketSet = BracketSet(expectedSentence, expectedBrackets)
-    assert(output.sentence === expectedSentence)
-    assert(output.brackets === expectedBrackets)
-    assert(output === expectedBracketSet)
+  test("from 1 word, 0 bracket BracketSet to tree") {
+    val expectedTree = SyntaxTree(TreeNode("word"))
+    val sentence = Sentence("word")
+    val brackets = Set.empty[Bracket[String]]
+    val output = BracketSet(sentence, brackets).tree
+    assert(output === expectedTree)
   }
 
-  test("1 terminal 1 non-terminal syntax tree to bracket set") {
-    val output = SyntaxTree(TreeNode("S", TreeNode("word"))).bracketSet
-    val expectedSentence = Sentence("word")
-    val expectedBrackets = Set(Bracket("S", Span(0, 1), 0))
-    val expectedBracketSet = BracketSet(expectedSentence, expectedBrackets)
-    assert(output.sentence === expectedSentence)
-    assert(output.brackets === expectedBrackets)
-    assert(output === expectedBracketSet)
-  }
-  
-  test("1 terminal 2 non-terminal syntax tree to bracket set") {
-    val output = SyntaxTree(
-       TreeNode("S1", TreeNode("S2", TreeNode("word")))).bracketSet
-    val expectedSentence = Sentence("word")
-    val expectedBrackets = 
-      Set(Bracket("S1", Span(0, 1), 0), Bracket("S2", Span(0,1), 1))
-    val expectedBracketSet = BracketSet(expectedSentence, expectedBrackets)
-    assert(output.sentence === expectedSentence)
-    assert(output.brackets === expectedBrackets)
-    assert(output === expectedBracketSet)
+  test("from 1 word, 1 bracket BracketSet to tree") {
+    val expectedTree = SyntaxTree(TreeNode("S", TreeNode("word")))
+    val sentence = Sentence("word")
+    val brackets = Set(Bracket("S", Span(0, 1), 0))
+    val output = BracketSet(sentence, brackets).tree
+    assert(output === expectedTree)
   }
 
-  test("2 terminal 1 non-terminal syntax tree to bracket set") {
-    val output =
-      SyntaxTree(TreeNode("S", TreeNode("word"), TreeNode("up"))).bracketSet
-    val expectedSentence = Sentence("word", "up")
-    val expectedBrackets = Set(Bracket("S", Span(0, 2), 0))
-    val expectedBracketSet = BracketSet(expectedSentence, expectedBrackets)
-    assert(output.sentence === expectedSentence)
-    assert(output.brackets === expectedBrackets)
-    assert(output === expectedBracketSet)
+  test("from 1 word, 2 bracket BracketSet to tree") {
+    val expectedTree =
+      SyntaxTree(TreeNode("S1", TreeNode("S2", TreeNode("word"))))
+    val sentence = Sentence("word")
+    val brackets =
+      Set(Bracket("S1", Span(0, 1), 0), Bracket("S2", Span(0, 1), 1))
+    val output = BracketSet(sentence, brackets).tree
+    assert(output === expectedTree)
   }
 
-  test("full 'Pierre Vinken' tree to bracket set") {
-    val output = SyntaxTree(
+  test("from 2 word, 1 bracket BracketSet to tree") {
+    val expectedTree =
+      SyntaxTree(TreeNode("S", TreeNode("word"), TreeNode("up")))
+    val sentence = Sentence("word", "up")
+    val brackets = Set(Bracket("S", Span(0, 2), 0))
+    val output = BracketSet(sentence, brackets).tree
+    assert(output === expectedTree)
+  }
+
+  test("full 'Pierre Vinken' BracketSet to tree") {
+    val expectedTree = SyntaxTree(
       TreeNode("S",
         TreeNode("NP-SBJ",
           TreeNode("NP",
@@ -92,12 +83,11 @@ class SyntaxTreeSuite extends FunSuite {
             TreeNode("NP-TMP",
               TreeNode("NNP", TreeNode("Nov.")),
               TreeNode("CD", TreeNode("29"))))),
-        TreeNode(".", TreeNode(".")))).bracketSet
-
+        TreeNode(".", TreeNode("."))))
     val text = "Pierre Vinken , 61 years old , will join the board as a " +
       "nonexecutive director Nov. 29 ."
-    val expectedSentence = Sentence(text.split("\\s+"):_*)
-    val expectedBrackets = Set(
+    val sentence = Sentence(text.split("\\s+"):_*)
+    val brackets = Set(
       Bracket("S", Span(0, 18), 0),
       Bracket("NP-SBJ", Span(0, 7), 1),
       Bracket("NP", Span(0, 2), 2),
@@ -127,9 +117,7 @@ class SyntaxTreeSuite extends FunSuite {
       Bracket("NNP", Span(15, 16), 26),
       Bracket("CD", Span(16, 17), 27),
       Bracket(".", Span(17, 18), 28))
-    val expectedBracketSet = BracketSet(expectedSentence, expectedBrackets)
-    assert(output.sentence === expectedSentence)
-    assert(output.brackets === expectedBrackets)
-    assert(output === expectedBracketSet)
+    val output = BracketSet(sentence, brackets).tree
+    assert(output === expectedTree)
   }
 }
