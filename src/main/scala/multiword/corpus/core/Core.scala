@@ -68,14 +68,31 @@ case class Sentence[T](val tokens: IndexedSeq[Token[T]])
 }
 
 object Sentence {
-  def apply[T](tokens:T*) = new Sentence(tokens map {Token(_)} toIndexedSeq)
+  def apply[T](tokens: T*) = new Sentence(tokens map { Token(_) } toIndexedSeq)
 }
 
+object UncomparableSpans extends CorpusException
+
 /** A span of entities, such as tokens */
-case class Span(val start: Int, val end: Int) extends LinguisticEntity {
+case class Span(val start: Int, val end: Int)
+  extends LinguisticEntity with Ordered[Span] {
 
   /** Return the length of this span */
   lazy val length = end - start
+
+  override def compare(that: Span) =
+    if (this == that)
+      0
+
+    // if that is a daughter of this, then this is GREATER than that
+    else if (this.start <= that.start && that.end <= this.end)
+      1
+
+    else if (that.start <= this.start && this.end <= that.end)
+      -1
+
+    else
+      throw UncomparableSpans
 }
 
 /** Abstract superclass for documents */

@@ -27,6 +27,14 @@ class NotWellFormedSyntaxTree extends SyntaxTreeException
 case class SyntaxTree[N, T](val root: TreeNode[N, T])
   extends Annotation[Sentence[T]] {
 
+  override def toString = root.toString
+
+  /**
+   * Convert this tree to an unlabeled tree, retaining just the structure and
+   * collapsing single branch nodes
+   */
+  lazy val unlabeled: SyntaxTree[Nothing, T] = bracketSet.unlabeled.tree
+
   /** Convert this tree structure to a {@link BracketSet} structure */
   lazy val bracketSet: BracketSet[N, T] = {
     var tokenIndex = 0
@@ -45,13 +53,13 @@ case class SyntaxTree[N, T](val root: TreeNode[N, T])
               sentenceBuffer += symbol
               tokenIndex += 1
             }
-            case NonTerminal(label, daughters) => {
+            case LabeledNonTerminal(label, daughters @ _*) => {
               labels push label
               dfsIndices push dfsIndex
               startIndices push tokenIndex
               dfsIndex += 1
               nodes push None
-              daughters.toSeq.reverse.foreach(d => {
+              daughters.reverse.foreach(d => {
                 nodes push Some(d)
               })
             }
@@ -76,8 +84,7 @@ case class SyntaxTree[N, T](val root: TreeNode[N, T])
  * @tparam N the node or non-terminal label type
  * @tparam T the leaf or terminal symbol type
  */
-abstract class TreeNode[N, T] {
-
+abstract class TreeNode[+N, T] {
   /** Make an immutable copy of self */
   def immutable: TreeNode[N, T]
 }
@@ -86,20 +93,23 @@ abstract class TreeNode[N, T] {
  * A non-terminal node in an abstract syntax tree
  * @param label the
  */
-case class NonTerminal[N, T](
+case class LabeledNonTerminal[N, T](
   val label: N,
-  val daughters: Iterable[TreeNode[N, T]]) extends TreeNode[N, T] {
+  val daughters: TreeNode[N, T]*) extends TreeNode[N, T] {
 
   override def immutable =
-    NonTerminal(label, (daughters.map(_.immutable)).toIndexedSeq)
+    LabeledNonTerminal(label, daughters.map(_.immutable): _*)
+
+  override def toString = "(" + label + " " + daughters.mkString(" ") + ")"
+}
+
+case class UnlabeledNonTerminal[T](val daughters: TreeNode[Nothing, T]*)
+  extends TreeNode[Nothing, T] {
+  override def immutable = UnlabeledNonTerminal(daughters.map(_.immutable): _*)
+  override def toString = "(" + daughters.mkString(" ") + ")"
 }
 
 case class Terminal[N, T](val symbol: T) extends TreeNode[N, T] {
   override def immutable = this
-}
-
-object TreeNode {
-  def apply[N](symbol: N, daughters: TreeNode[N, N]*) =
-    if (daughters.isEmpty) new Terminal[N, N](symbol)
-    else new NonTerminal(symbol, daughters)
+  override def toString = symbol.toString
 }

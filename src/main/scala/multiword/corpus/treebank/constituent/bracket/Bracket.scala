@@ -43,6 +43,60 @@ case class Bracket[L](val label: L, val span: Span, val dfsIndex: Int)
   val bracketPostfix = ")"
 }
 
+case class UnlabeledBracketSet[T](
+  val sentence: Sentence[T], val spans: Set[Span])
+  extends Annotation[Sentence[T]] {
+
+  import UnlabeledBracketSet._
+
+  // firstInd = map from each token index to the brackets starting at that index
+  // lastInd = map from each token index to the brackets ending at that index
+  private lazy val (firstInd, lastInd) = {
+    val _firstInd = mutableIndexSeq(sentence.length)
+    val _lastInd = mutableIndexSeq(sentence.length)
+    spans.filter(_.length > 0).foreach(span => {
+      _firstInd(span.start) += span
+      _lastInd(span.end) += span
+    })
+    (immutableSeq(_firstInd), immutableSeq(_lastInd))
+  }
+
+  lazy val tree: SyntaxTree[Nothing, T] = {
+    val treeNodes = mutable.Stack[TreeNode[Nothing, T]]()
+    var node: TreeNode[Nothing, T] = null
+    for (index <- 0 until sentence.length) {
+      lastInd(index).foreach(_ => treeNodes.pop)
+      firstInd(index).foreach(bracket => {
+        val daughters = mutable.Buffer[TreeNode[Nothing, T]]()
+        node = UnlabeledNonTerminal(daughters: _*)
+        if (!treeNodes.isEmpty) {
+          treeNodes.top match {
+            case UnlabeledNonTerminal(daughters @ _*) => {
+              daughters match {
+                case m: mutable.Buffer[TreeNode[Nothing, T]] => m += node
+              }
+            }
+          }
+        }
+        treeNodes.push(node)
+      })
+      node = Terminal(sentence(index))
+      if (!treeNodes.isEmpty) {
+        treeNodes.top match {
+          case UnlabeledNonTerminal(daughters @ _*) => {
+            daughters match {
+              case m: mutable.Buffer[TreeNode[Nothing, T]] => m += node
+            }
+          }
+        }
+      }
+    }
+    while (!treeNodes.isEmpty)
+      node = treeNodes.pop
+    SyntaxTree(node.immutable)
+  }
+}
+
 /**
  * A set of bracket annotations for a sentence
  * @param length the number of tokens in the sentence
@@ -56,6 +110,20 @@ case class BracketSet[N, T](
   extends Annotation[Sentence[T]] {
 
   import BracketSet._
+
+  private lazy val smallSentence = sentence.length <= 1
+
+  /**
+   * Make an unlabeled version of this bracket set -- the same brackets only
+   * without labels; de facto this removes single branch nodes (except
+   * pre-terminals). Also, prune pre-terminals (POS) -- the brackets spanning
+   * just one term, unless the sentence is only length 1. The dfsIndex
+   * is ignored and reset to 0, since the spans are sufficient to distinguish
+   * brackets.
+   */
+  lazy val unlabeled = UnlabeledBracketSet(
+    sentence,
+    (for (b <- brackets) yield b.span).filter(_.length > 1 || smallSentence))
 
   // firstInd = map from each token index to the brackets starting at that index
   // lastInd = map from each token index to the brackets ending at that index
@@ -76,10 +144,10 @@ case class BracketSet[N, T](
       lastInd(index).foreach(_ => treeNodes.pop)
       firstInd(index).foreach(bracket => {
         val daughters = mutable.Buffer[TreeNode[N, T]]()
-        node = NonTerminal(bracket.label, daughters)
+        node = LabeledNonTerminal(bracket.label, daughters: _*)
         if (!treeNodes.isEmpty) {
           treeNodes.top match {
-            case NonTerminal(_, daughters) => {
+            case LabeledNonTerminal(_, daughters @ _*) => {
               daughters match {
                 case m: mutable.Buffer[TreeNode[N, T]] => m += node
               }
@@ -91,7 +159,7 @@ case class BracketSet[N, T](
       node = Terminal(sentence(index))
       if (!treeNodes.isEmpty) {
         treeNodes.top match {
-          case NonTerminal(_, daughters) => {
+          case LabeledNonTerminal(_, daughters @ _*) => {
             daughters match {
               case m: mutable.Buffer[TreeNode[N, T]] => m += node
             }
@@ -103,6 +171,20 @@ case class BracketSet[N, T](
       node = treeNodes.pop
     SyntaxTree(node.immutable)
   }
+}
+
+object UnlabeledBracketSet {
+
+  private def mutableIndexSeq(n: Int) =
+    (for (_ <- 0 to n) yield mutable.Buffer[Span]()).toIndexedSeq
+
+  /**
+   * Creates an array of immutable sequences of brackets sorted by dfsIndex
+   * from an array of mutable
+   */
+  private def immutableSeq(s: Seq[mutable.Seq[Span]]) =
+    s.map(_.sorted.toIndexedSeq)
+
 }
 
 object BracketSet {
