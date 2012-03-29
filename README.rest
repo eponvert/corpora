@@ -1,4 +1,4 @@
-multiword.corpus
-================
+multiword
+=========
+Some tools and things for words and text, mostly in Scala.
 
-Interfaces and utilities for linguistic data-sets, mostly in Scala.
