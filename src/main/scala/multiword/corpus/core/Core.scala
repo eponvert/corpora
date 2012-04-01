@@ -71,7 +71,7 @@ object Sentence {
   def apply[T](tokens: T*) = new Sentence(tokens map { Token(_) } toIndexedSeq)
 }
 
-object UncomparableSpans extends CorpusException
+class UncomparableSpans extends CorpusException
 
 /** A span of entities, such as tokens */
 case class Span(val start: Int, val end: Int)
@@ -92,7 +92,7 @@ case class Span(val start: Int, val end: Int)
       -1
 
     else
-      throw UncomparableSpans
+      throw new UncomparableSpans
 }
 
 /** Abstract superclass for documents */
