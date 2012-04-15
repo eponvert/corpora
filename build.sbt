@@ -1,4 +1,4 @@
-name := "multiword.corpus"
+name := "multiword"
 
 version := "0.1.0-SNAPSHOT"
 
